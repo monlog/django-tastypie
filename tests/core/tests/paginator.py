@@ -6,6 +6,7 @@ from tastypie.paginator import Paginator
 from core.models import Note
 from core.tests.resources import NoteResource
 from django.db import reset_queries
+from django.http import QueryDict
 
 
 class PaginatorTestCase(TestCase):
@@ -159,10 +160,15 @@ class PaginatorTestCase(TestCase):
             'slug__startswith': u'☃',
             'format': 'json',
         }
+        self.assertEqual(meta['previous'], '/api/v1/notes/?slug__startswith=%E2%98%83&offset=0&limit=2&format=json')
+        self.assertEqual(meta['next'], u'/api/v1/notes/?slug__startswith=%E2%98%83&offset=4&limit=2&format=json')
+        self.assertEqual(meta['total_count'], 6)
+    
+    def test_multiple(self):
+        request = QueryDict('a=1&a=2')
         paginator = Paginator(request, self.data_set, resource_uri='/api/v1/notes/', limit=2, offset=2)
         meta = paginator.page()['meta']
         self.assertEqual(meta['limit'], 2)
         self.assertEqual(meta['offset'], 2)
-        self.assertEqual(meta['previous'], '/api/v1/notes/?slug__startswith=%E2%98%83&offset=0&limit=2&format=json')
-        self.assertEqual(meta['next'], u'/api/v1/notes/?slug__startswith=%E2%98%83&offset=4&limit=2&format=json')
-        self.assertEqual(meta['total_count'], 6)
+        self.assertEqual(meta['previous'], '/api/v1/notes/?a=1&a=2&limit=2&offset=0')
+        self.assertEqual(meta['next'], '/api/v1/notes/?a=1&a=2&limit=2&offset=4')
